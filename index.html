@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bangladesh Top Earn</title>
+<link rel="stylesheet" href="style.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Log In</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm" class="auth-form active">
+      <div class="auth-logo"><img src="logo.png" alt="BD Top Earn" class="site-logo"/></div>
+      <h2>Welcome Back</h2>
+      <p class="auth-sub">Login to access your dashboard</p>
+      <div class="input-group">
+        <span class="input-icon">✉</span>
+        <input type="email" id="loginEmail" placeholder="Email Address"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="loginPass" placeholder="Password"/>
+        <span class="eye-toggle" onclick="togglePass('loginPass')">👁</span>
+      </div>
+      <div class="row-between">
+        <label class="check-label"><input type="checkbox"/> Keep me logged in</label>
+        <a href="#" class="link-blue" onclick="showForgotPassword()">Forgot Password?</a>
+      </div>
+      <button class="btn-main" onclick="doLogin()">LOGIN SECURELY 🛡</button>
+      <p class="auth-foot">New to our platform? <a href="#" class="link-blue" onclick="switchTab('signup')">Create Account</a></p>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupForm" class="auth-form">
+      <div class="auth-logo"><img src="logo.png" alt="BD Top Earn" class="site-logo"/></div>
+      <h2>Create Account</h2>
+      <p class="auth-sub">Start your journey with Bangladesh Top Earn</p>
+      <div class="input-group">
+        <span class="input-icon">🎁</span>
+        <input type="text" id="refId" placeholder="Referral ID (Optional)"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">👤</span>
+        <input type="text" id="regName" placeholder="Full Name"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">✉</span>
+        <input type="email" id="regEmail" placeholder="Email Address"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="regPass" placeholder="Password"/>
+        <span class="eye-toggle" onclick="togglePass('regPass')">👁</span>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">✔</span>
+        <input type="password" id="regPass2" placeholder="Confirm Password"/>
+      </div>
+      <button class="btn-main" onclick="doRegister()">Register Now →</button>
+      <p class="auth-foot">Already have an account? <a href="#" class="link-blue" onclick="switchTab('login')">Log In</a></p>
+    </div>
+
+    <!-- FORGOT PASSWORD FORM -->
+    <div id="forgotForm" class="auth-form">
+      <div class="auth-logo">🔑</div>
+      <h2>Reset Password</h2>
+      <p class="auth-sub">Enter your email to reset your password</p>
+      <div class="input-group">
+        <span class="input-icon">✉</span>
+        <input type="email" id="forgotEmail" placeholder="Your registered Email"/>
+      </div>
+      <div id="forgotNewPassFields" style="display:none">
+        <div class="input-group">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="forgotNewPass" placeholder="New Password"/>
+          <span class="eye-toggle" onclick="togglePass('forgotNewPass')">👁</span>
+        </div>
+        <div class="input-group">
+          <span class="input-icon">✔</span>
+          <input type="password" id="forgotNewPass2" placeholder="Confirm New Password"/>
+        </div>
+      </div>
+      <button class="btn-main" id="forgotBtn" onclick="doForgotPassword()">Find Account</button>
+      <p class="auth-foot"><a href="#" class="link-blue" onclick="switchTab('login')">← Back to Login</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="appScreen" class="screen">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <button class="hamburger" onclick="openMenu()">☰</button>
+    <span class="header-title">BANGLADESH TOP EARN</span>
+    <button class="bell-btn" onclick="showSection('notifications')">🔔<span id="notifDot" class="notif-dot" style="display:none"></span></button>
+  </header>
+
+  <!-- WELCOME BAR -->
+  <div class="welcome-bar">
+    <div class="avatar-wrap"><div class="avatar">👤</div></div>
+    <div class="welcome-text">
+      <small>WELCOME BACK,</small>
+      <strong id="welcomeName">User</strong>
+    </div>
+    <div class="wallet-badge" onclick="showSection('wallet')">
+      💰 ৳<span id="walletBal">0.00</span>
+    </div>
+  </div>
+
+  <!-- NOTICE TICKER -->
+  <div class="notice-bar">
+    <span class="notice-tag">Notice</span>
+    <div class="ticker-wrap"><span class="ticker" id="noticeTicker"></span></div>
+  </div>
+
+  <!-- PAGE CONTENT -->
+  <div id="pageContent">
+
+    <!-- ====== HOME ====== -->
+    <div id="page-home" class="page active">
+      <div id="inactiveBanner" class="inactive-banner" style="display:none">
+        <div class="banner-icon">⚠️</div>
+        <h3>আপনার একাউন্ট একটিভ নয়!</h3>
+        <p>আপনার একাউন্ট এক্টিভ করে ২০ টাকা বোনাস নিন সাথে সাথে 🎊</p>
+        <button class="btn-active-now" onclick="showActivate()">⚡ Active Now</button>
+      </div>
+
+      <div class="card site-age-card">
+        <div class="site-age-header">⏰ সাইটের বয়স <span class="live-dot">● Live</span></div>
+        <div class="age-counters" id="siteAge"></div>
+      </div>
+
+      <div class="card projects-card">
+        <div class="projects-title">🚀 আমাদের প্রজেক্ট সমূহ</div>
+        <div class="projects-grid" id="projectsGrid"></div>
+      </div>
+    </div>
+
+    <!-- ====== WALLET ====== -->
+    <div id="page-wallet" class="page">
+      <div class="card">
+        <h3 class="section-h">💰 My Wallet</h3>
+        <div class="wallet-big">৳<span id="walletBig">0.00</span></div>
+        <div id="activeWalletWarn" class="locked-warn">
+          <div class="locked-icon-box">🔒</div>
+          <h4>উইথড্র করতে একাউন্ট এক্টিভ করুন</h4>
+          <p>আপনার একাউন্ট এক্টিভ করে ২০ টাকা বোনাস নিন সাথে সাথে 💸</p>
+          <button class="btn-orange" onclick="showActivate()">এক্টিভ করুন</button>
+        </div>
+        <div id="withdrawSection" style="display:none">
+          <div class="input-group mt"><input type="number" id="withdrawAmt" placeholder="Amount (min ৳50)"/></div>
+          <div class="input-group"><input type="text" id="withdrawNum" placeholder="bKash / Nagad Number"/></div>
+          <select id="withdrawMethod" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;margin-bottom:12px">
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
+          </select>
+          <button class="btn-main" onclick="doWithdraw()">Withdraw Funds</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="section-h">💳 Payment History</h3>
+        <div id="paymentHistory"><p class="empty-msg">No transactions yet.</p></div>
+      </div>
+    </div>
+
+    <!-- ====== TEAM ====== -->
+    <div id="page-team" class="page">
+      <div class="card">
+        <div class="team-header-row">
+          <div class="team-icon-big">👥</div>
+          <div><h3 class="blue-h">My Referral Team</h3></div>
+          <div class="team-size-box">Team Size:<br/><strong id="teamSize">0</strong></div>
+        </div>
+      </div>
+      <div class="card"><div id="teamLevels"></div></div>
+      <div class="card refer-card">
+        <div class="refer-gift">🎁</div>
+        <h4>আপনার বন্ধুকে রেফার করুন 🤝</h4>
+        <p>প্রতি ভেরিফাই রেফারে পাবেন <strong>৳20 টাকা</strong> বোনাস 🎉</p>
+        <div class="ref-link-box" id="refLinkBox"></div>
+        <button class="btn-copy" onclick="copyRefLink()">📋 লিংক কপি করুন</button>
+        <p class="ref-note">আপনার রেফারেন লিংকটি বন্ধুদের সাথে শেয়ার করুন। তারা একাউন্ট খুলে একাউন্ট একটিভ করলে আপনি বোনাস পাবেন।</p>
+      </div>
+    </div>
+
+    <!-- ====== PROFILE ====== -->
+    <div id="page-profile" class="page">
+      <div class="profile-banner-bg"></div>
+      <div class="profile-avatar-float">
+        <div class="profile-avatar-circle">👤</div>
+      </div>
+      <div class="card profile-card-body">
+        <h3 class="section-h">Account Settings</h3>
+        <label class="field-label">Full Name</label>
+        <div class="input-group"><input type="text" id="profileName" placeholder="Full Name"/></div>
+        <label class="field-label">Email Address</label>
+        <div class="input-group"><input type="email" id="profileEmail" disabled/></div>
+        <small class="muted">Gmail change করা যাবে না।</small>
+        <label class="field-label" style="margin-top:14px">বর্তমান পাসওয়ার্ড</label>
+        <div class="input-group"><input type="password" id="currentPass" placeholder="বর্তমান পাসওয়ার্ড"/></div>
+        <p class="muted">পাসওয়ার্ড পরিবর্তন করতে চাইলে বর্তমান পাসওয়ার্ড দিন।</p>
+        <label class="field-label">নতুন পাসওয়ার্ড</label>
+        <div class="input-group"><input type="password" id="newPass" placeholder="নতুন পাসওয়ার্ড"/></div>
+        <button class="btn-main" onclick="saveProfile()">SAVE SETTINGS</button>
+        <button class="btn-outline" style="margin-top:10px" onclick="showSection('home')">← Back</button>
+      </div>
+    </div>
+
+    <!-- ====== HELP ====== -->
+    <div id="page-help" class="page">
+      <div class="card">
+        <h3 class="section-h">Support Channels</h3>
+        <div class="support-list">
+          <a href="#" target="_blank" class="support-item" id="link-fbpage">
+            <div class="support-icon fb-s">f</div>
+            <div><strong>Facebook Page</strong><br/><small>Like &amp; Follow us</small></div>
+            <span class="arrow">›</span>
+          </a>
+          <a href="#" target="_blank" class="support-item" id="link-tgchannel">
+            <div class="support-icon tg-s">✈</div>
+            <div><strong>Telegram Channel</strong><br/><small>Get all updates</small></div>
+            <span class="arrow">›</span>
+          </a>
+          <a href="#" target="_blank" class="support-item" id="link-admin1">
+            <div class="support-icon adm-s">👥</div>
+            <div><strong>Admin Support</strong><br/><small>ট্রানজেকশন সমস্যা হলে যোগাযোগ করুন</small></div>
+            <span class="arrow">›</span>
+          </a>
+          <a href="#" target="_blank" class="support-item" id="link-ytchannel">
+            <div class="support-icon yt-s">▶</div>
+            <div><strong>YouTube Channel</strong><br/><small>Official Videos</small></div>
+            <span class="arrow">›</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== NOTIFICATIONS ====== -->
+    <div id="page-notifications" class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 class="section-h" style="margin:0">🔔 Notifications</h3>
+          <button class="btn-sm-red" onclick="clearNotifications()">Clear All</button>
+        </div>
+        <div id="notifList"><p class="empty-msg">No notifications yet.</p></div>
+      </div>
+    </div>
+
+    <!-- ====== JOB: FACEBOOK ====== -->
+    <div id="page-job-facebook" class="page job-page">
+      <div class="card">
+        <div class="job-header-row">
+          <span class="job-badge fb-badge">f Facebook Sell</span>
+          <span class="rate-badge" id="rate-facebook">Rate: ৳14.00</span>
+        </div>
+        <div class="job-notice" id="notice-facebook"></div>
+        <label class="field-label">UID / Profile Link</label>
+        <div class="input-group"><input type="text" id="fb-uid" placeholder="ID UID"/></div>
+        <label class="field-label">Login Email/Phone</label>
+        <div class="input-group"><input type="text" id="fb-email" placeholder="Email/Phone"/></div>
+        <label class="field-label">Password</label>
+        <div class="input-group">
+          <input type="password" id="fb-pass" placeholder="Password"/>
+          <span class="eye-toggle" onclick="togglePass('fb-pass')">👁</span>
+        </div>
+        <label class="field-label">2FA Key (Mandatory)</label>
+        <div class="input-group"><input type="text" id="fb-2fa" placeholder="Enter 2FA Key"/></div>
+        <button class="btn-blue-job" onclick="submitJob('facebook')">SUBMIT FACEBOOK ID</button>
+        <button class="btn-outline" style="margin-top:10px" onclick="viewHistory('facebook')">↺ View Activity History</button>
+      </div>
+    </div>
+
+    <!-- ====== JOB: GMAIL ====== -->
+    <div id="page-job-gmail" class="page job-page">
+      <div class="card">
+        <div class="job-video-row" id="videoBtn-gmail" style="display:none">
+          <span>▶</span>
+          <div><strong>ভিডিও</strong><br/><small>এই প্রজেক্টের ভিডিও দেখতে এখানে ক্লিক করুন</small></div>
+          <span>↗</span>
+        </div>
+        <div class="job-header-row">
+          <span class="job-badge gm-badge">✉ Gmail Sell</span>
+          <span class="rate-badge" id="rate-gmail">Rate: ৳18.00</span>
+        </div>
+        <div class="job-notice" id="notice-gmail"></div>
+        <label class="field-label">জিমেইল এড্রেস</label>
+        <div class="input-group"><input type="email" id="gm-email" placeholder="example@gmail.com"/></div>
+        <label class="field-label">পাসওয়ার্ড</label>
+        <div class="input-group">
+          <input type="password" id="gm-pass" placeholder="পাসওয়ার্ড লিখুন"/>
+          <span class="eye-toggle" onclick="togglePass('gm-pass')">👁</span>
+        </div>
+        <button class="btn-red-job" onclick="submitJob('gmail')">SUBMIT GMAIL</button>
+        <button class="btn-outline" style="margin-top:10px" onclick="viewHistory('gmail')">↺ View Gmail History</button>
+      </div>
+    </div>
+
+    <!-- ====== JOB: INSTAGRAM ====== -->
+    <div id="page-job-instagram" class="page job-page">
+      <div class="card">
+        <div class="job-header-row">
+          <span class="job-badge ig-badge">📷 Insta Sell</span>
+          <span class="rate-badge" id="rate-instagram">Rate: ৳3.00</span>
+        </div>
+        <div class="job-notice" id="notice-instagram"></div>
+        <label class="field-label">ইউজারনেম</label>
+        <div class="input-group"><input type="text" id="ig-user" placeholder="@username"/></div>
+        <label class="field-label">পাসওয়ার্ড</label>
+        <div class="input-group">
+          <input type="password" id="ig-pass" placeholder="Password"/>
+          <span class="eye-toggle" onclick="togglePass('ig-pass')">👁</span>
+        </div>
+        <label class="field-label">2FA Key</label>
+        <div class="input-group"><input type="text" id="ig-2fa" placeholder="2FA Key (Optional)"/></div>
+        <button class="btn-pink-job" onclick="submitJob('instagram')">SUBMIT INSTAGRAM ID</button>
+        <button class="btn-outline" style="margin-top:10px" onclick="viewHistory('instagram')">↺ View Sales History</button>
+      </div>
+    </div>
+
+    <!-- ====== HISTORY ====== -->
+    <div id="page-history" class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3 class="section-h" style="margin:0" id="historyTitle">Activity History</h3>
+          <button class="btn-outline" style="width:auto;padding:8px 16px" onclick="goBack()">← Back</button>
+        </div>
+        <div id="historyList"><p class="empty-msg">No history yet.</p></div>
+      </div>
+    </div>
+
+    <!-- ====== ADMIN PANEL ====== -->
+    <div id="page-admin" class="page">
+      <div class="admin-header-bar">⚙️ Admin Panel</div>
+      <div class="admin-tabs-scroll">
+        <button class="admin-tab active" onclick="adminTab(this,'dashboard')">📊 Dashboard</button>
+        <button class="admin-tab" onclick="adminTab(this,'users')">👥 Users</button>
+        <button class="admin-tab" onclick="adminTab(this,'jobs')">📋 Jobs</button>
+        <button class="admin-tab" onclick="adminTab(this,'settings')">⚙️ Settings</button>
+        <button class="admin-tab" onclick="adminTab(this,'withdrawals')">💸 Withdrawals</button>
+      </div>
+
+      <!-- ADMIN: DASHBOARD -->
+      <div id="admin-dashboard" class="admin-pane active">
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card blue-stat"><div class="stat-label">Total Users</div><div class="stat-val" id="stat-users">0</div></div>
+          <div class="admin-stat-card green-stat"><div class="stat-label">Active</div><div class="stat-val" id="stat-active">0</div></div>
+          <div class="admin-stat-card orange-stat"><div class="stat-label">Total Jobs</div><div class="stat-val" id="stat-jobs">0</div></div>
+          <div class="admin-stat-card red-stat"><div class="stat-label">Pending W/D</div><div class="stat-val" id="stat-pending">0</div></div>
+        </div>
+        <div class="card">
+          <h4 class="card-title">📢 Send Notification</h4>
+          <div class="input-group"><input type="text" id="notifMsg" placeholder="Message to all users..."/></div>
+          <button class="btn-main" onclick="sendNotification()">Send to All Users</button>
+        </div>
+        <div class="card">
+          <h4 class="card-title">📌 Notice Ticker</h4>
+          <div class="input-group"><input type="text" id="tickerMsg" placeholder="Notice text..."/></div>
+          <button class="btn-main" onclick="updateTicker()">Update Ticker</button>
+        </div>
+        <div class="card">
+          <h4 class="card-title">🎁 Gift Code Management</h4>
+          <div class="input-row">
+            <div class="input-group" style="flex:2"><input type="text" id="giftCodeInput" placeholder="Code (e.g. EARN100)"/></div>
+            <div class="input-group" style="flex:1"><input type="number" id="giftAmtInput" placeholder="৳ Amount"/></div>
+          </div>
+          <button class="btn-main" onclick="createGiftCode()">+ Create Gift Code</button>
+          <div id="giftCodeList" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: USERS -->
+      <div id="admin-users" class="admin-pane">
+        <div class="card">
+          <h4 class="card-title">All Users</h4>
+          <div class="input-group"><input type="text" id="searchUser" placeholder="🔍 Search by name or email..." oninput="renderAdminUsers()"/></div>
+          <div id="adminUsersList"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: JOBS -->
+      <div id="admin-jobs" class="admin-pane">
+        <div class="card">
+          <h4 class="card-title">Job Rate &amp; Status</h4>
+          <div id="jobSettingsList"></div>
+        </div>
+        <div class="card">
+          <h4 class="card-title">Job Passwords &amp; Notices</h4>
+          <div id="jobPasswordSettings"></div>
+        </div>
+        <!-- ── COPY DATA PANEL ── -->
+        <div class="card copy-data-card">
+          <h4 class="card-title">📥 কাজের ডাটা কপি করুন</h4>
+          <p class="copy-data-hint">এক ক্লিকে সব ডাটা কপি হবে — Google Sheet-এ Ctrl+V দিন</p>
+          <div class="copy-data-grid">
+            <button class="copy-data-btn fb-copy-btn" onclick="copyJobData('facebook')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" width="22" height="22" alt="fb"/>
+              <span>Facebook</span>
+            </button>
+            <button class="copy-data-btn gm-copy-btn" onclick="copyJobData('gmail')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="22" height="22" alt="gmail"/>
+              <span>Gmail</span>
+            </button>
+            <button class="copy-data-btn ig-copy-btn" onclick="copyJobData('instagram')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg" width="22" height="22" alt="ig"/>
+              <span>Instagram</span>
+            </button>
+            <button class="copy-data-btn ref-copy-btn" onclick="copyJobData('referral')">
+              <img src="https://cdn-icons-png.flaticon.com/512/3050/3050273.png" width="22" height="22" alt="ref"/>
+              <span>Referrals</span>
+            </button>
+          </div>
+          <div id="copyDataStatus" class="copy-data-status" style="display:none"></div>
+        </div>
+
+        <!-- ── CSV DOWNLOAD PANEL ── -->
+        <div class="card csv-download-card">
+          <h4 class="card-title">📥 ডাউনলোড করুন (CSV File)</h4>
+          <p class="copy-data-hint">CSV ফাইল ডাউনলোড হবে — Excel বা Google Sheets-এ খুলুন</p>
+          <div class="copy-data-grid">
+            <button class="csv-dl-btn fb-dl-btn" onclick="downloadJobData('facebook')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" width="20" height="20" alt="fb"/>
+              <span>Facebook CSV</span>
+            </button>
+            <button class="csv-dl-btn gm-dl-btn" onclick="downloadJobData('gmail')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="20" height="20" alt="gmail"/>
+              <span>Gmail CSV</span>
+            </button>
+            <button class="csv-dl-btn ig-dl-btn" onclick="downloadJobData('instagram')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg" width="20" height="20" alt="ig"/>
+              <span>Insta CSV</span>
+            </button>
+            <button class="csv-dl-btn ref-dl-btn" onclick="downloadJobData('referral')">
+              <img src="https://cdn-icons-png.flaticon.com/512/3050/3050273.png" width="20" height="20" alt="ref"/>
+              <span>Referrals CSV</span>
+            </button>
+          </div>
+          <div id="csvDownloadStatus" class="copy-data-status" style="display:none"></div>
+        </div>
+
+        <div class="card">
+          <h4 class="card-title">Job Submissions</h4>
+          <div id="adminJobSubmissions"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN: SETTINGS -->
+      <div id="admin-settings" class="admin-pane">
+        <div class="card">
+          <h4 class="card-title">💰 Financial Settings</h4>
+          <label class="field-label">Activation Fee (৳)</label>
+          <div class="input-group"><input type="number" id="sett-activefee" placeholder="30"/></div>
+          <label class="field-label">Referral Bonus (৳)</label>
+          <div class="input-group"><input type="number" id="sett-refbonus" placeholder="20"/></div>
+          <label class="field-label">Activation Bonus (৳)</label>
+          <div class="input-group"><input type="number" id="sett-activebonus" placeholder="20"/></div>
+          <label class="field-label">Min Withdrawal (৳)</label>
+          <div class="input-group"><input type="number" id="sett-minwithdraw" placeholder="50"/></div>
+          <label class="field-label">Site Launch Date</label>
+          <div class="input-group"><input type="date" id="sett-launchdate"/></div>
+          <button class="btn-main" onclick="saveSettings()">Save Financial Settings</button>
+        </div>
+        <div class="card">
+          <h4 class="card-title">🔗 Links &amp; Contacts</h4>
+          <label class="field-label">Admin 1 Telegram Link</label>
+          <div class="input-group"><input type="text" id="admin1link" placeholder="https://t.me/..."/></div>
+          <label class="field-label">Admin 2 Telegram Link</label>
+          <div class="input-group"><input type="text" id="admin2link" placeholder="https://t.me/..."/></div>
+          <label class="field-label">Telegram Channel</label>
+          <div class="input-group"><input type="text" id="tgchannel" placeholder="https://t.me/..."/></div>
+          <label class="field-label">Facebook Page</label>
+          <div class="input-group"><input type="text" id="fbpage" placeholder="https://fb.com/..."/></div>
+          <label class="field-label">YouTube Channel</label>
+          <div class="input-group"><input type="text" id="ytchannel" placeholder="https://youtube.com/..."/></div>
+          <label class="field-label">bKash Number</label>
+          <div class="input-group"><input type="text" id="bkashNum" placeholder="01XXXXXXXXX"/></div>
+          <label class="field-label">Nagad Number</label>
+          <div class="input-group"><input type="text" id="nagadNum" placeholder="01XXXXXXXXX"/></div>
+          <button class="btn-main" onclick="saveContacts()">Save Links &amp; Contacts</button>
+        </div>
+      </div>
+
+      <!-- ADMIN: WITHDRAWALS -->
+      <div id="admin-withdrawals" class="admin-pane">
+        <div class="card">
+          <h4 class="card-title">💸 All Withdrawal Requests</h4>
+          <div id="adminWithdrawList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end pageContent -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="showSection('help')"><span>🎧</span><small>Help</small></button>
+    <button class="nav-btn" onclick="showSection('wallet')"><span>💰</span><small>Wallet</small></button>
+    <button class="nav-btn home-btn" onclick="showSection('home')"><span class="home-icon">🏠</span><small>HOME</small></button>
+    <button class="nav-btn" onclick="showSection('team')"><span>👥</span><small>Team</small></button>
+    <button class="nav-btn" onclick="showSection('profile')"><span>👤</span><small>Profile</small></button>
+  </nav>
+</div>
+
+<!-- ============ SIDE DRAWER ============ -->
+<div id="menuOverlay" class="menu-overlay" onclick="closeMenu()"></div>
+<div id="sideMenu" class="side-menu">
+  <div class="side-menu-top">
+    <span class="side-brand">⚡ BD TOP EARN</span>
+    <button class="side-close-btn" onclick="closeMenu()">✕</button>
+  </div>
+  <div class="side-profile-card">
+    <div class="side-avatar">👤</div>
+    <div class="side-name" id="sideMenuName">User</div>
+    <div class="side-meta-row">
+      <span class="side-id-badge" id="sideMenuId">ID: ---</span>
+      <span class="side-status-badge" id="sideMenuStatus">● Inactive</span>
+    </div>
+    <div class="side-stats-row">
+      <div class="side-stat"><small>BALANCE</small><strong>৳<span id="sideMenuBal">0.00</span></strong></div>
+      <div class="side-stat-divider"></div>
+      <div class="side-stat"><small>MEMBER SINCE</small><strong><span id="sideMenuSince">---</span></strong></div>
+    </div>
+    <div class="side-action-btns">
+      <button class="side-profile-btn" onclick="closeMenu();showSection('profile')">👥 Profile</button>
+      <button class="side-support-btn" onclick="closeMenu();showSection('help')">🎧 Support</button>
+    </div>
+  </div>
+  <div class="side-nav-section">HOME SELECTION</div>
+  <button class="side-nav-item" onclick="closeMenu();showSection('home')">🏠 Dashboard</button>
+  <button class="side-nav-item" onclick="closeMenu();showSection('profile')">⚙️ Profile Update</button>
+  <div class="side-nav-section">FINANCE</div>
+  <button class="side-nav-item" onclick="closeMenu();showSection('wallet')">💸 Withdraw Funds</button>
+  <button class="side-nav-item" onclick="closeMenu();showSection('wallet')">🕐 Payment History</button>
+  <div class="side-nav-section">TEAM &amp; SUPPORT</div>
+  <button class="side-nav-item" onclick="closeMenu();showSection('team')">👥 My Team</button>
+  <button class="side-nav-item" onclick="closeMenu();showSection('help')">🎧 Helpline</button>
+  <div id="adminMenuItem" style="display:none">
+    <div class="side-nav-section">ADMIN</div>
+    <button class="side-nav-item admin-nav-item" onclick="closeMenu();showSection('admin')">⚙️ Admin Panel</button>
+  </div>
+  <div class="side-nav-section">ACCOUNT</div>
+  <button class="side-nav-item logout-nav-item" onclick="doLogout()">🚪 Log Out</button>
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- Activate Modal -->
+<div id="activateModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('activateModal')">✕</button>
+    <div class="modal-icon">🔓</div>
+    <h3>Unlock Account</h3>
+    <p>আপনার অ্যাকাউন্টটি বর্তমানে ইনঅ্যাক্টিভ অবস্থায় রয়েছে। দ্রুত অ্যাক্টিভেশন সম্পন্ন করে কাজ শুরু করুন।</p>
+    <div class="fee-display-box">
+      <span class="fee-label">ONE-TIME FEE</span>
+      <span class="fee-amount">৳<span id="activeFeeDisplay">30.00</span></span>
+    </div>
+    <button class="btn-purple" onclick="proceedActivate()">Activate Now ›</button>
+    <p class="modal-footer-text">Developed By <strong>Bangladesh Top Earn</strong></p>
+  </div>
+</div>
+
+<!-- Welcome Modal -->
+<div id="welcomeModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('welcomeModal')">✕</button>
+    <div class="info-icon-circle">ℹ</div>
+    <h3>Welcome!</h3>
+    <p>প্রতিদিন গিফট কোড দেওয়া হয় আমাদের টেলিগ্রাম চ্যানেলে। গিফট কোড বোনাস নিতে জয়েন করুন</p>
+    <button class="btn-tg" id="joinTgBtn">✈ Join Telegram</button>
+    <hr style="margin:16px 0;border:none;border-top:1px solid #eee"/>
+    <p class="red-text">যাদের ট্রানজেকশন সমস্যা তারা নিচের আইডিতে যোগাযোগ করবেন</p>
+    <div class="welcome-admin-btns">
+      <button class="btn-admin-1" id="admin1Btn">👤 এডমিন 1</button>
+      <button class="btn-admin-2" id="admin2Btn">👤 এডমিন 2</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Method Select Modal -->
+<div id="paymentModal" class="modal-overlay">
+  <div class="modal-box pay-select-modal">
+    <button class="modal-close" onclick="closeModal('paymentModal')">✕</button>
+    <!-- Logo + Brand Header -->
+    <div class="pay-modal-header">
+      <img src="logo.png" alt="BD Top Earn" class="pay-modal-logo"/>
+      <div class="pay-modal-brand">
+        <div class="pay-modal-brand-name">BD TOP EARN</div>
+        <div class="pay-modal-inv">INV: <span id="payModalInv">LOADING...</span></div>
+      </div>
+    </div>
+    <div class="pay-section-label">Payment Method</div>
+    <div class="pay-options-list">
+      <div class="pay-option-row pay-bkash-row" onclick="choosePay('bkash')">
+        <div class="pay-method-left">
+          <div class="pay-method-icon bkash-icon">b</div>
+          <div>
+            <div class="pay-method-name">bKash</div>
+            <div class="pay-method-sub">Personal — Send Money</div>
+          </div>
+        </div>
+        <span class="personal-tag">PERSONAL</span>
+      </div>
+      <div class="pay-option-row pay-nagad-row" onclick="choosePay('nagad')">
+        <div class="pay-method-left">
+          <div class="pay-method-icon nagad-icon">N</div>
+          <div>
+            <div class="pay-method-name">Nagad</div>
+            <div class="pay-method-sub">Personal — Send Money</div>
+          </div>
+        </div>
+        <span class="personal-tag">PERSONAL</span>
+      </div>
+    </div>
+    <div class="payable-amount-bar">PAYABLE AMOUNT <strong>৳<span id="payableAmt">30.00</span></strong></div>
+  </div>
+</div>
+
+<!-- Pay Instructions + TrxID Modal (full detail like your design) -->
+<div id="payInstructModal" class="modal-overlay">
+  <div class="modal-box pay-instruct-modal">
+    <button class="modal-close" onclick="closeModal('payInstructModal')">✕</button>
+
+    <!-- Header with logo -->
+    <div class="pay-instruct-header">
+      <img src="logo.png" alt="BD Top Earn" class="pay-modal-logo"/>
+      <div class="pay-modal-brand">
+        <div class="pay-modal-brand-name">BD TOP EARN</div>
+        <div class="pay-modal-inv">INV: <span id="payInstrInv">GNXZL0000000</span></div>
+      </div>
+    </div>
+
+    <!-- TrxID input at top -->
+    <div class="trx-section">
+      <div class="trx-label">পেমেন্ট নিশ্চিত করুন</div>
+      <div class="trx-sub">ট্রান্সজেকশন আইডি দিন</div>
+      <div class="input-group trx-input-wrap">
+        <input type="text" id="txnId" placeholder="Ex: 8JHS82..."/>
+      </div>
+      <p class="trx-hint">পেমেন্ট করার পর SMS বা অ্যাপ থেকে পাওয়া TrxID টি বসান</p>
+    </div>
+
+    <!-- Method badge -->
+    <div class="pay-personal-badge">Personal Method</div>
+
+    <!-- Step-by-step instructions -->
+    <div class="pay-steps" id="paySteps"></div>
+
+    <!-- Number display -->
+    <div class="pay-number-display">
+      <span class="pay-number-label">প্রাপক নম্বর:</span>
+      <span class="pay-number-val" id="payInstNumber">01XXXXXXXXX</span>
+      <button class="btn-copy-num" onclick="copyPayNumber()">COPY</button>
+    </div>
+
+    <!-- Amount -->
+    <div class="pay-amount-display">
+      টাকার পরিমাণঃ <strong>৳<span id="payInstAmt">30.00</span></strong>
+    </div>
+
+    <button class="btn-verify" onclick="confirmPayment()">VERIFY PAYMENT</button>
+  </div>
+</div>
+
+<!-- Level Members Modal -->
+<div id="levelModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('levelModal')">✕</button>
+    <h3 id="levelModalTitle">Level 1 Members</h3>
+    <div id="levelModalList"><p class="empty-msg">No members yet.</p></div>
+  </div>
+</div>
+
+<!-- Job Detail Modal -->
+<div id="jobDetailModal" class="modal-overlay">
+  <div class="modal-box job-detail-modal">
+    <button class="modal-close" onclick="closeModal('jobDetailModal')">✕</button>
+    <div class="jd-header">
+      <div class="jd-type-badge" id="jdTypeBadge">FACEBOOK</div>
+      <div class="jd-meta">
+        <div class="jd-user" id="jdUser">User Name</div>
+        <div class="jd-email" id="jdEmail">email@example.com</div>
+        <div class="jd-date" id="jdDate">Date</div>
+      </div>
+      <div class="jd-rate" id="jdRate">৳0</div>
+    </div>
+
+    <!-- Submitted data table -->
+    <div class="jd-data-table" id="jdDataTable"></div>
+
+    <!-- Status badge -->
+    <div style="margin:14px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="jd-status-label">Status:</span>
+      <span class="sub-status" id="jdStatusBadge">PENDING</span>
+    </div>
+
+    <!-- Actions -->
+    <div id="jdActions" class="jd-actions"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
