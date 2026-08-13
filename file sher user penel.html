@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Premium Store | Full Access</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Monetag Crypto SDK -->
+    <script src="//libtl.com/sdk.js"></script>
+    
+    <style>
+        :root { --primary: #00d2ff; --secondary: #3a7bd5; --glass: rgba(255, 255, 255, 0.1); --text: #ffffff; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        html, body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; background: #000; color: var(--text); overflow-x: hidden; min-height: 100vh; }
+
+        /* Jikimiki Background */
+        .background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at bottom, #001f3f 0%, #000 100%); pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.5); opacity: 1; } }
+
+        /* Popups & Loaders */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; }
+        #join-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; }
+
+        .page { display: none; padding: 15px; animation: slideUp 0.4s ease; padding-bottom: 100px; }
+        .active-page { display: block; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Search & Cards */
+        .search-container { position: sticky; top: 0; z-index: 100; padding: 10px 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(10px); }
+        .search-input { width: 100%; background: var(--glass); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 12px 20px; border-radius: 30px; font-size: 14px; }
+        .yt-card { background: rgba(255, 255, 255, 0.05); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 15px; cursor: pointer; position: relative; }
+        .yt-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+        .badge-type { position: absolute; top: 10px; left: 10px; padding: 3px 10px; border-radius: 5px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+
+        /* Ads UI */
+        .ad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .ad-box { background: var(--glass); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--primary); }
+        .ad-box span { display: block; font-size: 22px; font-weight: bold; color: var(--primary); }
+        .watch-btn { background: linear-gradient(45deg, var(--primary), var(--secondary)); border: none; color: white; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        .next-btn { background: #222; color: #555; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; margin-top: 15px; text-align: center; border: 1px solid #333; }
+        .next-btn.unlocked { background: #00ff00; color: #000; box-shadow: 0 0 15px #00ff00; border: none; cursor: pointer; }
+
+        /* Payment UI */
+        .pay-method-btn { display: flex; align-items: center; justify-content: space-between; background: white; color: black; padding: 15px 25px; border-radius: 15px; margin-bottom: 15px; cursor: pointer; font-weight: bold; width: 100%; border: none; }
+        .trx-input { background: rgba(255,255,255,0.05); border: 1px solid #444; color: white; width: 100%; padding: 12px; border-radius: 10px; margin: 15px 0; font-size: 16px; text-align: center; letter-spacing: 1px; }
+
+        /* History Tab */
+        .history-card { background: var(--glass); border-radius: 15px; padding: 15px; margin-bottom: 10px; border-left: 4px solid gold; position: relative; }
+        .status-tag { position: absolute; top: 10px; right: 10px; font-size: 10px; padding: 2px 8px; border-radius: 5px; font-weight: bold; }
+        .dl-link-row { background: rgba(0,210,255,0.1); padding: 12px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .dl-link-btn { background: var(--primary); color: #000; border: none; padding: 6px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; text-decoration: none; }
+
+        /* Original Premium Profile UI */
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
+        .profile-pic-container { position: relative; width: 100px; height: 100px; margin: 0 auto 15px; }
+        #u-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--primary); padding: 3px; object-fit: cover; }
+        .premium-badge { position: absolute; bottom: 0; right: 0; background: gold; color: black; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+        .info-box { display: flex; justify-content: space-between; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+
+        /* Navigation Bar */
+        .nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
+        .nav-item { color: #777; font-size: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; }
+
+        #block-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #ff4d4d; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20000; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="background-container" id="stars-bg"></div>
+
+<!-- Loader -->
+<div id="loader">
+    <i class="fas fa-shield-halved fa-beat" style="font-size: 40px; color: var(--primary);"></i>
+    <p style="margin-top:20px; letter-spacing:2px; font-size: 12px;">SECURE SYNCING...</p>
+</div>
+
+<!-- Join Check Popup -->
+<div id="join-popup">
+    <i class="fas fa-paper-plane" style="font-size: 50px; color: var(--primary); margin-bottom: 20px;"></i>
+    <h2>JOIN OUR CHANNELS</h2>
+    <p style="font-size: 14px; color: #ccc;">ফাইল ডাউনলোড করতে নিচের চ্যানেল ও গ্রুপে জয়েন করুন।</p>
+    <a href="#" id="chan-link" target="_blank" class="pay-method-btn" style="background:#0088cc; color:white; justify-content:center;">JOIN CHANNEL</a>
+    <a href="#" id="grp-link" target="_blank" class="pay-method-btn" style="background:#0088cc; color:white; justify-content:center;">JOIN GROUP</a>
+    <button class="watch-btn" onclick="checkMembership()">CHECK JOINED STATUS</button>
+</div>
+
+<!-- Block Screen -->
+<div id="block-screen"><h1>ACCESS DENIED</h1><p>You are blocked by the Admin.</p></div>
+
+<!-- Home Page -->
+<div id="home" class="page active-page">
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search projects..." onkeyup="filterHome()">
+    </div>
+    <div id="post-list">Syncing database...</div>
+</div>
+
+<!-- Ad Verification Page -->
+<div id="ads-page" class="page">
+    <h3 style="text-align:center; color:var(--primary); margin-bottom:20px;">VERIFY STEPS</h3>
+    <div class="ad-grid">
+        <div class="ad-box"><small>Total Steps</small><span id="t-ads">0</span></div>
+        <div class="ad-box"><small>Done</small><span id="w-ads">0</span></div>
+    </div>
+    <button class="watch-btn" id="watch-btn-id" onclick="callCryptoAd()">WATCH AD TO VERIFY</button>
+    <div id="next-lock-btn" class="next-btn"><i class="fas fa-lock"></i> NEXT STEP</div>
+</div>
+
+<!-- Premium Payment Selection -->
+<div id="pay-select" class="page">
+    <h3 style="text-align:center; color:var(--primary); margin-bottom:25px;">SELECT PAYMENT METHOD</h3>
+    <button class="pay-method-btn" onclick="openPay('bkash')">
+        <img src="https://i.postimg.cc/7Zt656YX/images.webp" width="40"> <span>PAY VIA BKASH</span>
+    </button>
+    <button class="pay-method-btn" onclick="openPay('nagad')">
+        <img src="https://i.postimg.cc/HWbV6dBJ/images-(1).jpg" width="40"> <span>PAY VIA NAGAD</span>
+    </button>
+</div>
+
+<!-- Payment Details -->
+<div id="payment-page" class="page">
+    <div class="glass-card" style="text-align:center;">
+        <div id="method-icon" style="margin-bottom: 10px;"></div>
+        <h3 id="method-title" style="margin:0 0 10px 0; color: var(--primary);"></h3>
+        <h2 id="disp-num" style="letter-spacing:1px; margin:0;">01314303595</h2>
+        <button onclick="copyNum()" style="background:none; border:1px solid var(--primary); color:var(--primary); padding:5px 12px; border-radius:5px; font-size:11px; margin:10px 0; cursor:pointer;">COPY NUMBER</button>
+        <p style="font-size:18px; font-weight:bold; color:gold; margin:5px 0;">Amount: <span id="disp-amt">0</span> BDT</p>
+        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; font-size:12px; text-align:left; color:#ddd; line-height:1.8;">
+            🕋 আসসালামু আলাইকুম <br>
+            ✅এখানে নির্ধারিত এমাউন্ট অনুযায়ী টাকা পাঠান <br>
+            ❌কম বা বেশী টাকা পাঠালে ফাইল দেওয়া হবে না <br>
+            ✅সঠিক Trx Id দিবেন, ভুল দিলে সরাসরি ব্লক করা হবে।
+        </div>
+        <input type="text" id="trx-input" class="trx-input" placeholder="Enter Transaction ID" oninput="valTrx()">
+        <button class="watch-btn" id="sub-pay-btn" onclick="submitRequest()" disabled>SUBMIT REQUEST</button>
+    </div>
+</div>
+
+<!-- History Page -->
+<div id="history-page" class="page">
+    <h3 style="color:var(--primary); margin-bottom:20px;"><i class="fas fa-history"></i> My Requests & History</h3>
+    <div id="my-req-list">No history recorded yet.</div>
+</div>
+
+<!-- Profile Page -->
+<div id="profile" class="page">
+    <div class="glass-card" style="text-align: center;">
+        <div class="profile-pic-container">
+            <img id="u-img" src="">
+            <div class="premium-badge">PREMIUM</div>
+        </div>
+        <h2 id="u-name" style="margin: 5px 0;">User</h2>
+        <p id="u-username" style="color: var(--primary); margin-bottom: 20px;">@username</p>
+        <div class="info-box"><span>User ID</span><span id="u-id">000000</span></div>
+        <div class="info-box"><span>Verified Status</span><span style="color: #00ff00;">✔ Verified</span></div>
+        <div class="info-box"><span>Current Plan</span><span>Life Time Free</span></div>
+    </div>
+</div>
+
+<!-- Navbar -->
+<div class="nav">
+    <div class="nav-item active" onclick="navTo('home', this)"><i class="fas fa-home"></i>HOME</div>
+    <div class="nav-item" onclick="navTo('history-page', this)"><i class="fas fa-tasks"></i>HISTORY</div>
+    <div class="nav-item" onclick="navTo('profile', this)"><i class="fas fa-user-astronaut"></i>PROFILE</div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue, get, push, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCSDfYztapzwaVgFDUqMnI84fHevaR6mww",
+        authDomain: "au-bot-4f5f0.firebaseapp.com",
+        databaseURL: "https://au-bot-4f5f0-default-rtdb.firebaseio.com",
+        projectId: "au-bot-4f5f0",
+        appId: "1:1098494913501:web:65517323172ec1af732434"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    let userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "guest";
+    let appSettings = {}, allPosts = [], selectedPost = {}, watchedCount = 0, selectedMethod = "";
+
+    // 1. Loading & Member Check
+    get(ref(db, 'settings')).then(s => {
+        if(!s.exists()) { tg.showAlert("Error: Firebase Settings not found!"); return; }
+        appSettings = s.val();
+        document.getElementById('chan-link').href = appSettings.chan_link;
+        document.getElementById('grp-link').href = appSettings.grp_link;
+        
+        // Load Monetag SDK
+        const sdk = document.createElement('script');
+        sdk.src = '//libtl.com/sdk.js';
+        sdk.setAttribute('data-zone', appSettings.ad_tag);
+        sdk.setAttribute('data-sdk', 'show_' + appSettings.ad_tag);
+        document.head.appendChild(sdk);
+
+        checkMembership();
+    });
+
+    window.checkMembership = async () => {
+        try {
+            const chanId = "@" + appSettings.chan_link.split('/').pop();
+            const res = await fetch(`https://api.telegram.org/bot${appSettings.bot_token}/getChatMember?chat_id=${chanId}&user_id=${userId}`);
+            const data = await res.json();
+            if(data.ok && ['member','administrator','creator'].includes(data.result.status)) {
+                document.getElementById('join-popup').style.display = 'none';
+                document.getElementById('loader').style.display = 'none';
+                initHome();
+            } else {
+                document.getElementById('join-popup').style.display = 'flex';
+                document.getElementById('loader').style.display = 'none';
+                tg.showAlert("⚠️ Please join our Channel and Group first!");
+            }
+        } catch(e) { document.getElementById('loader').style.display = 'none'; initHome(); }
+    };
+
+    // 2. Block Check & Sync Profile
+    onValue(ref(db, `users/${userId}/profile`), snap => {
+        const p = snap.val();
+        if(p && p.isBlocked) { document.getElementById('block-screen').style.display='flex'; return; }
+        if(tg.initDataUnsafe.user){
+            const u = tg.initDataUnsafe.user;
+            update(ref(db, `users/${userId}/profile`), { first_name: u.first_name, username: u.username || 'N/A', photo_url: u.photo_url || '', isBlocked: false, id: u.id });
+            document.getElementById('u-name').innerText = u.first_name;
+            document.getElementById('u-username').innerText = u.username ? "@" + u.username : "@User";
+            document.getElementById('u-id').innerText = userId;
+            if(u.photo_url) document.getElementById('u-img').src = u.photo_url;
+        }
+    });
+
+    // 3. Home Rendering
+    function initHome() {
+        onValue(ref(db, 'files'), snap => {
+            const data = snap.val();
+            allPosts = data ? Object.values(data).reverse() : [];
+            renderPosts(allPosts);
+        });
+    }
+
+    function renderPosts(posts) {
+        const div = document.getElementById('post-list');
+        div.innerHTML = "";
+        posts.forEach(p => {
+            div.innerHTML += `
+            <div class="yt-card" onclick='handlePostClick(${JSON.stringify(p)})'>
+                <div class="badge-type" style="background:${p.type==='premium'?'gold':'#00ff00'}; color:#000;">${p.type}</div>
+                <img src="${p.thumbnail}" class="yt-thumb">
+                <div style="padding:12px;"><h4 style="margin:0;">${p.name}</h4></div>
+            </div>`;
+        });
+    }
+
+    window.filterHome = () => {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        renderPosts(allPosts.filter(p => p.name.toLowerCase().includes(q)));
+    };
+
+    // 4. Ad Verification
+    window.handlePostClick = (p) => {
+        selectedPost = p;
+        if(p.type === 'normal') {
+            watchedCount = 0;
+            document.getElementById('t-ads').innerText = p.ads_count;
+            document.getElementById('w-ads').innerText = 0;
+            const nb = document.getElementById('next-lock-btn');
+            nb.className = "next-btn"; nb.innerHTML = `<i class="fas fa-lock"></i> NEXT STEP`;
+            changePage('ads-page');
+        } else {
+            document.getElementById('disp-amt').innerText = p.price;
+            changePage('pay-select');
+        }
+    };
+
+    window.callCryptoAd = () => {
+        const adFunc = "show_" + appSettings.ad_tag;
+        const watchBtn = document.getElementById('watch-btn-id');
+        if(typeof window[adFunc] === 'function') {
+            const startTime = Date.now();
+            watchBtn.disabled = true; watchBtn.innerText = "Opening Ad...";
+            window[adFunc]().then(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                if(elapsed >= selectedPost.ads_time) {
+                    watchedCount++;
+                    document.getElementById('w-ads').innerText = watchedCount;
+                    if(watchedCount >= selectedPost.ads_count) {
+                        const nb = document.getElementById('next-lock-btn');
+                        nb.classList.add('unlocked'); nb.innerHTML = `NEXT STEP <i class="fas fa-arrow-right"></i>`;
+                        nb.onclick = () => showLinks(selectedPost);
+                    } else { watchBtn.disabled = false; watchBtn.innerText = "WATCH NEXT AD"; }
+                } else {
+                    tg.showAlert(`❌ Too fast! Please watch for at least ${selectedPost.ads_time} seconds.`);
+                    watchBtn.disabled = false; watchBtn.innerText = "RETRY WATCHING";
+                }
+            }).catch(() => { watchBtn.disabled = false; watchBtn.innerText = "RETRY AD"; });
+        } else { tg.showAlert("Ad system loading, try in 2s."); }
+    };
+
+    // 5. Premium Payment
+    window.openPay = (method) => {
+        selectedMethod = method;
+        const iconDiv = document.getElementById('method-icon');
+        const titleDiv = document.getElementById('method-title');
+        if(method === 'bkash') {
+            iconDiv.innerHTML = `<img src="https://i.postimg.cc/7Zt656YX/images.webp" width="60">`;
+            titleDiv.innerText = "BKASH PAYMENT";
+        } else {
+            iconDiv.innerHTML = `<img src="https://i.postimg.cc/HWbV6dBJ/images-(1).jpg" width="60">`;
+            titleDiv.innerText = "NAGAD PAYMENT";
+        }
+        changePage('payment-page');
+    };
+
+    window.valTrx = () => {
+        const val = document.getElementById('trx-input').value.trim();
+        document.getElementById('sub-pay-btn').disabled = (val.length < 8 || val.length > 12);
+    };
+
+    window.submitRequest = async () => {
+        const trx = document.getElementById('trx-input').value.trim();
+        const snap = await get(ref(db, 'requests'));
+        let used = false;
+        if(snap.exists()) Object.values(snap.val()).forEach(r => { if(r.trxId === trx && r.status === 'approved') used = true; });
+        
+        if(used) { tg.showAlert("❌ This Trx ID is already approved/used!"); return; }
+
+        push(ref(db, 'requests'), {
+            userId, trxId: trx, amount: selectedPost.price, method: selectedMethod, 
+            status: 'pending', fileName: selectedPost.name, links: selectedPost.links, 
+            timestamp: Date.now()
+        }).then(() => {
+            tg.showAlert("✅ Success! Your payment request is submitted. Admin will approve soon.");
+            navTo('history-page', document.querySelectorAll('.nav-item')[1]);
+        });
+    };
+
+    // 6. History Sync
+    onValue(ref(db, 'requests'), snap => {
+        const div = document.getElementById('my-req-list');
+        div.innerHTML = "";
+        const data = snap.val();
+        if(data) {
+            Object.values(data).reverse().forEach(r => {
+                if(r.userId == userId) {
+                    div.innerHTML += `
+                    <div class="history-card">
+                        <div class="status-tag" style="background:${r.status==='approved'?'#00ff00':(r.status==='rejected'?'#f00':'gold')}; color:#000;">${r.status.toUpperCase()}</div>
+                        <h4 style="margin:0;">${r.fileName}</h4>
+                        <small>Via: ${r.method.toUpperCase()} | Trx: ${r.trxId}</small>
+                        <div style="margin-top:10px;">
+                            ${r.status === 'approved' ? r.links.map(l => `
+                                <div class="dl-link-row">
+                                    <span style="font-size:12px;">${l.name}</span>
+                                    <a href="${l.url}" target="_blank" class="dl-link-btn">DOWNLOAD</a>
+                                </div>`).join('') : '<p style="color:#777; font-size:11px;">Downloads will enable after Admin Approval.</p>'}
+                        </div>
+                    </div>`;
+                }
+            });
+        }
+    });
+
+    function showLinks(p) {
+        let content = `<h3 style="color:var(--primary);">${p.name}</h3><p style="font-size:12px; color:#aaa;">${p.description}</p>`;
+        p.links.forEach(l => {
+            content += `<div class="dl-link-row"><span>${l.name}</span><a href="${l.url}" target="_blank" class="dl-link-btn">DOWNLOAD</a></div>`;
+        });
+        document.getElementById('post-list').innerHTML = content;
+        changePage('home');
+        tg.showAlert("✅ Ads Verification Complete! Files Unlocked.");
+    }
+
+    // Helpers
+    window.navTo = (id, el) => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active'); changePage(id);
+    };
+    function changePage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+        document.getElementById(id).classList.add('active-page'); window.scrollTo(0,0);
+    }
+    window.copyNum = () => {
+        const tempInput = document.createElement("input");
+        tempInput.value = "01314303595";
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        tg.showAlert("📋 Number copied to clipboard!");
+    };
+
+    // Stars
+    const starBox = document.getElementById('stars-bg');
+    for(let i=0; i<45; i++) {
+        let s = document.createElement('div'); s.className = 'star';
+        s.style.left = Math.random()*100+'%'; s.style.top = Math.random()*100+'%';
+        s.style.setProperty('--duration', (Math.random()*3+2)+'s'); starBox.appendChild(s);
+    }
+</script>
+</body>
+</html>
