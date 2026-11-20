@@ -23,15 +23,15 @@ const DEFAULT_SEO_CONFIG: SeoConfig = {
   googleSiteVerification: 'google-site-verification-token',
   bingSiteVerification: '',
   yandexVerification: '',
-  metaTitle: 'BD Topsell – Free Fire Diamond & PUBG UC Top Up, SMS Virtual Number & Micro Jobs',
-  metaDescription: 'BD Topsell – বাংলাদেশের বিশ্বস্ত গেমিং টপ-আপ ও অনলাইন ইনকাম প্ল্যাটফর্ম। Free Fire Diamond, PUBG UC, Facebook/Instagram/Gmail অ্যাকাউন্ট সেল করে ইনকাম, সোশ্যাল মিডিয়া ফলোয়ার ও ভার্চুয়াল নাম্বার ওটিপি সেবা।',
+  metaTitle: 'BD Topsell – Free Fire Diamond & PUBG UC Top Up & Micro Jobs',
+  metaDescription: 'BD Topsell – বাংলাদেশের বিশ্বস্ত গেমিং টপ-আপ ও অনলাইন ইনকাম প্ল্যাটফর্ম। Free Fire Diamond, PUBG UC, Facebook/Instagram/Gmail অ্যাকাউন্ট সেল করে ইনকাম ও সোশ্যাল মিডিয়া ফলোয়ার সেবা।',
   keywords: [
     'bd topsell', 'bdtopsell.pages.dev', 'free fire diamond top up bd', 'free fire diamond buy bkash',
     'ff 100 diamond top up bd', 'ff weekly membership buy bd', 'pubg uc buy bangladesh',
     'pubg mobile uc top up bkash nagad', 'facebook account sell kore income', 'fb id sell bd',
     'instagram account sell kore income', 'insta id sell bd', 'gmail account sell kore income',
     'gmail sell bd', 'online income bd', 'daily earn bd', 'buy facebook followers bd',
-    'sms virtual number bangladesh', 'temp number for otp', 'bd bot hosting', 'vps hosting bd'
+    'bd bot hosting', 'vps hosting bd'
   ],
   ogImage: 'https://cdn.iconscout.com/icon/free/png-512/free-garena-free-fire-3628795-3030018.png',
   twitterHandle: '@bdtopsell',
@@ -82,8 +82,8 @@ export function generateSitemapXml(reqHost?: string, reqProto = 'https'): string
     { path: '/#gaming', priority: '0.95', changefreq: 'always' },
     { path: '/#gaming/ff', priority: '0.95', changefreq: 'always' },
     { path: '/#gaming/pubg', priority: '0.95', changefreq: 'always' },
-    { path: '/#numbers', priority: '0.9', changefreq: 'daily' },
     { path: '/#tempmail', priority: '0.85', changefreq: 'daily' },
+    { path: '/#getnumber', priority: '0.9', changefreq: 'daily' },
     { path: '/#hosting', priority: '0.9', changefreq: 'daily' },
     { path: '/#jobs', priority: '0.85', changefreq: 'daily' },
     { path: '/#job-facebook', priority: '0.85', changefreq: 'weekly' },

@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import esbuild from 'esbuild';
 import {
   listDirectoryFiles,
   readTextFileContent,
@@ -81,6 +83,9 @@ import {
   getDeploymentLogs,
   executeVpsTerminalCommand
 } from './cloud-platform-engine';
+import {
+  handleNumberSystemApiRequest
+} from './number-system-engine';
 
 export default defineConfig({
   server: {
@@ -90,9 +95,29 @@ export default defineConfig({
     watch: process.env.DISABLE_HMR === 'true' ? null : {},
   },
   plugins: [
-    {
-      name: 'mail-shop-proxy-plugin',
-      configureServer(server) {
+    (() => {
+      const attachMiddlewares = (server: { middlewares: any }) => {
+        // Anti-Scraper / Website Source Extractor Shield (blocks CLI & scraper agents on HTML routes)
+        server.middlewares.use((req: any, res: any, next: any) => {
+          const rawUrl = String(req.url || '/');
+          const urlPath = rawUrl.split('?')[0];
+          if (urlPath === '/' || urlPath === '/index.html' || urlPath.endsWith('.html')) {
+            const remote = String(req.socket?.remoteAddress || '');
+            const isLoopback = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
+            const ua = String(req.headers['user-agent'] || '');
+            const isSearchBot = /googlebot|bingbot|duckduckbot|yandexbot|facebookexternalhit|twitterbot|telegrambot|whatsapp/i.test(ua);
+            const isScraperUa = /termux|wget|python-requests|python-urllib|httpx|aiohttp|scrapy|httrack|webcopier|teleport|offline explorer|site-sucker|okhttp|go-http-client|node-fetch|axios|undici|postman|insomnia|libwww|lwp-|nikto|curl/i.test(ua);
+            if (!isSearchBot && !isLoopback && (!ua.trim() || !/mozilla\/5\.0/i.test(ua) || isScraperUa)) {
+              res.statusCode = 403;
+              res.setHeader('Content-Type', 'text/html; charset=utf-8');
+              res.setHeader('Cache-Control', 'no-store');
+              res.end('<!doctype html><html><head><title>403 Forbidden</title></head><body style="font-family:sans-serif;background:#090f1d;color:#94a3b8;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0"><div style="text-align:center"><h2>403 — Access Restricted</h2><p>Automated source extraction is disabled.</p></div></body></html>');
+              return;
+            }
+          }
+          next();
+        });
+
         // TempMailGo Multi-Provider Endpoint Suite
         server.middlewares.use('/api/tempmail/domains', async (req, res) => {
           res.setHeader('Content-Type', 'application/json');
@@ -262,6 +287,14 @@ export default defineConfig({
 
         // Universal proxy for external APIs
         server.middlewares.use('/api/dongvan-proxy', async (req, res) => {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, mauthapi, X-API-KEY');
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
           try {
             const urlObj = new URL(req.url || '', 'http://localhost');
             const targetUrl = urlObj.searchParams.get('url');
@@ -271,16 +304,30 @@ export default defineConfig({
               res.end(JSON.stringify({ error: 'Missing target url parameter' }));
               return;
             }
+            const headers: Record<string, string> = {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+              'Accept': 'application/json, text/plain, */*'
+            };
+            if (req.headers['mauthapi']) headers['mauthapi'] = String(req.headers['mauthapi']);
+            if (req.headers['x-api-key']) headers['X-API-KEY'] = String(req.headers['x-api-key']);
+            if (req.headers['authorization']) headers['Authorization'] = String(req.headers['authorization']);
+            if (req.headers['content-type']) headers['Content-Type'] = String(req.headers['content-type']);
+
+            let body: string | undefined = undefined;
+            if (req.method === 'POST') {
+              const chunks: any[] = [];
+              for await (const chunk of req) chunks.push(chunk);
+              body = Buffer.concat(chunks).toString();
+            }
+
             const fetchRes = await fetch(targetUrl, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                'Accept': 'application/json, text/plain, */*'
-              }
+              method: req.method === 'POST' ? 'POST' : 'GET',
+              headers,
+              body: body && body.length ? body : undefined
             });
             const text = await fetchRes.text();
             res.statusCode = fetchRes.status;
             res.setHeader('Content-Type', 'application/json');
-            res.setHeader('Access-Control-Allow-Origin', '*');
             res.end(text);
           } catch (e: any) {
             res.statusCode = 500;
@@ -846,8 +893,9 @@ export default defineConfig({
           res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
           if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
           try {
+            const overview = getClusterOverview();
             res.statusCode = 200;
-            res.end(JSON.stringify({ success: true, data: getClusterOverview() }));
+            res.end(JSON.stringify({ success: true, overview, data: overview }));
           } catch (e: any) {
             res.statusCode = 500;
             res.end(JSON.stringify({ success: false, error: e.message }));
@@ -868,9 +916,22 @@ export default defineConfig({
               res.statusCode = 201;
               res.end(JSON.stringify({ success: true, project }));
             } else {
-              const projects = listProjects();
-              res.statusCode = 200;
-              res.end(JSON.stringify({ success: true, projects }));
+              const urlObj = new URL(req.url || '', 'http://localhost');
+              const projectId = urlObj.searchParams.get('id');
+              if (projectId) {
+                const project = getProjectById(projectId);
+                if (!project) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ success: false, error: 'Project not found' }));
+                  return;
+                }
+                res.statusCode = 200;
+                res.end(JSON.stringify({ success: true, project }));
+              } else {
+                const projects = listProjects();
+                res.statusCode = 200;
+                res.end(JSON.stringify({ success: true, projects }));
+              }
             }
           } catch (e: any) {
             res.statusCode = 500;
@@ -1024,6 +1085,14 @@ export default defineConfig({
           res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
           if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
 
+          const normalizeVps = (v: any) => v ? ({
+            ...v,
+            ipAddress: v.ipAddress || v.ip || '127.0.0.1',
+            ip: v.ip || v.ipAddress || '127.0.0.1',
+            location: v.location || v.node || 'Singapore / Dhaka Peering',
+            ramGb: v.ramGb ?? Math.round((v.ramMb || 1024) / 1024)
+          }) : v;
+
           try {
             if (req.method === 'POST') {
               const body = await parseJsonBody(req);
@@ -1031,21 +1100,21 @@ export default defineConfig({
               if (action === 'snapshot' && id) {
                 const updated = createVpsSnapshot(id, snapshotName);
                 res.statusCode = 200;
-                res.end(JSON.stringify({ success: true, vps: updated }));
+                res.end(JSON.stringify({ success: true, vps: normalizeVps(updated) }));
               } else if (id && action) {
                 const updated = vpsAction(id, action);
                 res.statusCode = 200;
-                res.end(JSON.stringify({ success: true, vps: updated }));
+                res.end(JSON.stringify({ success: true, vps: normalizeVps(updated) }));
               } else if (body.name) {
                 const newVps = createVPS(body);
                 res.statusCode = 201;
-                res.end(JSON.stringify({ success: true, vps: newVps }));
+                res.end(JSON.stringify({ success: true, vps: normalizeVps(newVps) }));
               } else {
                 res.statusCode = 400;
                 res.end(JSON.stringify({ success: false, error: 'Missing parameters' }));
               }
             } else {
-              const list = listVPS();
+              const list = listVPS().map(normalizeVps);
               res.statusCode = 200;
               res.end(JSON.stringify({ success: true, vpsList: list }));
             }
@@ -1876,7 +1945,172 @@ export default defineConfig({
             res.end(JSON.stringify({ success: false, error: e.message }));
           }
         });
-      }
-    }
+
+        // ══════════════════════════════════════════════════════════════════
+        // NUMBER SYSTEM ENGINE API (OriginalBotNu Full Web + Admin Portal)
+        // ══════════════════════════════════════════════════════════════════
+        server.middlewares.use('/api/numbersystem', async (req: any, res: any) => {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 204;
+            res.end();
+            return;
+          }
+          try {
+            const parsedUrl = new URL(req.url || '/', 'http://localhost');
+            let subPath = parsedUrl.pathname || '/';
+            if (!subPath.startsWith('/')) subPath = '/' + subPath;
+            if (subPath.length > 1 && subPath.endsWith('/')) subPath = subPath.slice(0, -1);
+
+            const body = req.method === 'POST' ? await parseJsonBody(req) : {};
+            const result = await handleNumberSystemApiRequest(
+              subPath,
+              String(req.method || 'GET').toUpperCase(),
+              parsedUrl.searchParams,
+              body
+            );
+
+            res.statusCode = result.status || 200;
+            if (result.buffer) {
+              res.setHeader('Content-Type', result.contentType || 'application/zip');
+              if (result.filename) {
+                res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+              }
+              res.end(result.buffer);
+              return;
+            }
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(result.json ?? { success: true }));
+          } catch (e: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: e?.message || 'Number System error' }));
+          }
+        });
+
+        // Fallback JSON 404 for unknown /api/* routes so they never return SPA index.html
+        server.middlewares.use((req: any, res: any, next: any) => {
+          if (req.url && (req.url === '/api' || req.url.startsWith('/api/'))) {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.end(JSON.stringify({ success: false, error: 'API endpoint not found' }));
+            return;
+          }
+          next();
+        });
+      };
+
+      return {
+        name: 'mail-shop-proxy-plugin',
+        configureServer(server: any) {
+          attachMiddlewares(server);
+        },
+        configurePreviewServer(server: any) {
+          attachMiddlewares(server);
+        }
+      };
+    })(),
+    {
+      name: 'vite-plugin-bd-source-shield',
+      apply: 'build',
+      closeBundle() {
+        const distHtmlPath = path.resolve(process.cwd(), 'dist', 'index.html');
+        if (!fs.existsSync(distHtmlPath)) return;
+        const raw = fs.readFileSync(distHtmlPath, 'utf8');
+
+        let idx = 0;
+        const styles: string[] = [];
+        const inlineScripts: string[] = [];
+        const externalScripts: string[] = [];
+        let strippedHtml = '';
+
+        while (idx < raw.length) {
+          const nextSc = raw.indexOf('<script', idx);
+          const nextSt = raw.indexOf('<style', idx);
+          let pos = -1;
+          let kind = '';
+          if (nextSc !== -1 && (nextSt === -1 || nextSc < nextSt)) {
+            pos = nextSc;
+            kind = 'script';
+          } else if (nextSt !== -1) {
+            pos = nextSt;
+            kind = 'style';
+          }
+          if (pos === -1) {
+            strippedHtml += raw.slice(idx);
+            break;
+          }
+          strippedHtml += raw.slice(idx, pos);
+          const openEnd = raw.indexOf('>', pos);
+          if (openEnd === -1) {
+            strippedHtml += raw.slice(pos);
+            break;
+          }
+          const openTag = raw.slice(pos, openEnd + 1);
+          const closeTag = `</${kind}>`;
+          const closeIdx = raw.toLowerCase().indexOf(closeTag, openEnd + 1);
+          if (closeIdx === -1) {
+            strippedHtml += raw.slice(pos);
+            break;
+          }
+          const inner = raw.slice(openEnd + 1, closeIdx);
+          if (kind === 'script') {
+            if (/ld\+json/i.test(openTag)) {
+              strippedHtml += openTag + inner + closeTag;
+            } else if (/src=/i.test(openTag)) {
+              externalScripts.push(openTag + closeTag);
+            } else {
+              const min = esbuild.transformSync(inner, { loader: 'js', minify: true, legalComments: 'none' });
+              inlineScripts.push(min.code);
+            }
+          } else {
+            const minCss = esbuild.transformSync(inner, { loader: 'css', minify: true });
+            styles.push(minCss.code);
+          }
+          idx = closeIdx + closeTag.length;
+        }
+
+        const bodyOpenMatch = strippedHtml.match(/<body[^>]*>/i);
+        const bodyCloseIdx = strippedHtml.toLowerCase().lastIndexOf('</body>');
+        if (!bodyOpenMatch || bodyOpenMatch.index === undefined || bodyCloseIdx === -1) return;
+
+        const headPart = strippedHtml.slice(0, bodyOpenMatch.index);
+        const bodyOpenTag = bodyOpenMatch[0];
+        const bodyInner = strippedHtml
+          .slice(bodyOpenMatch.index + bodyOpenTag.length, bodyCloseIdx)
+          .replace(/<!--[\s\S]*?-->/g, '');
+        const tailPart = strippedHtml.slice(bodyCloseIdx + '</body>'.length);
+
+        const payloadJson = JSON.stringify({
+          css: styles,
+          html: bodyInner,
+          scripts: inlineScripts,
+        });
+        const plainBytes = Buffer.from(payloadJson, 'utf8');
+        const keyBytes = crypto.randomBytes(64);
+        const cipherBytes = Buffer.allocUnsafe(plainBytes.length);
+        for (let i = 0; i < plainBytes.length; i++) {
+          cipherBytes[i] = plainBytes[i] ^ keyBytes[i % keyBytes.length] ^ ((i * 31) & 0xff);
+        }
+        const cipherB64 = cipherBytes.toString('base64');
+        const keyB64 = keyBytes.toString('base64');
+
+        const loaderCode = `(function(){if(typeof window==="undefined"||typeof document==="undefined")return;var k="${keyB64}",d="${cipherB64}",ad=function(b){var s=atob(b),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u},kb=ad(k),cb=ad(d),out=new Uint8Array(cb.length);for(var i=0;i<cb.length;i++)out[i]=cb[i]^kb[i%kb.length]^((i*31)&255);var p=JSON.parse(new TextDecoder().decode(out));var h=document.head||document.documentElement;for(var c=0;c<p.css.length;c++){var st=document.createElement("style");st.textContent=p.css[c];h.appendChild(st)}var m=document.getElementById("__bd_app_mount");if(m){m.insertAdjacentHTML("beforebegin",p.html);m.parentNode.removeChild(m)}else{document.body.insertAdjacentHTML("beforeend",p.html)}for(var j=0;j<p.scripts.length;j++){var sc=document.createElement("script");sc.textContent=p.scripts[j];document.body.appendChild(sc)}})();`;
+        const minLoader = esbuild.transformSync(loaderCode, { loader: 'js', minify: true }).code;
+
+        const shieldedHtml =
+          headPart +
+          bodyOpenTag +
+          '\n<div id="__bd_app_mount"></div>\n' +
+          externalScripts.join('\n') +
+          `\n<script>${minLoader}</script>\n</body>` +
+          tailPart;
+
+        fs.writeFileSync(distHtmlPath, shieldedHtml, 'utf8');
+      },
+    },
   ]
 });

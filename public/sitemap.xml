@@ -44,14 +44,6 @@
     <priority>0.95</priority>
   </url>
 
-  <!-- SMS Virtual Number & OTP Service -->
-  <url>
-    <loc>https://bdtopsell.pages.dev/#numbers</loc>
-    <lastmod>2026-08-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-
   <!-- Wallet & Instant Deposit (bKash/Nagad) -->
   <url>
     <loc>https://bdtopsell.pages.dev/#deposit</loc>
